@@ -1,0 +1,97 @@
+---
+title: "Train_Test"
+author: "Hassan Dahir"
+date: "2023-05-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+####-------------------------------####
+source('../fun_0_loadLibrary.R')
+####-------------------------------####
+source('fun_2_2_trainRF.R')
+source('fun_2_3_apply_optimalRF_pcr.R')
+```
+
+
+
+
+
+```{r}
+library(vroom)  
+library(purrr)
+```
+
+
+
+```{r}
+process_station <- function(apply_optimalRF, trainRF, train_data, columns_set_up, key, trees, mtry) {
+  rf_input <- train_data %>% 
+    dplyr::select(all_of(columns_set_up)) %>% 
+    dplyr::mutate_all(as.numeric)
+  
+  optimal_ranger <- trainRF(input_table=rf_input, num.trees=trees, mtry=mtry)
+
+  #save trained model and variable importance rank
+        
+  vi_df <- data.frame(names=names(optimal_ranger$variable.importance)) %>%
+    mutate(importance=optimal_ranger$variable.importance)                     
+  write.csv(vi_df, paste0(outputDir,'varImportance_', key, '.csv'), row.names=F)
+
+
+  KGE_list <- mclapply(1:nrow(testStationInfo), key=key, columns_set_up=columns_set_up, optimal_ranger=optimal_ranger, apply_optimalRF, mc.cores=1)
+  
+  
+  rf.eval <- do.call(rbind,KGE_list)
+  write.csv(rf.eval, paste0(outputDirValidation, 'KGE_' , key, '.csv'), row.names = F)
+}
+```
+
+
+
+```{r}
+#-------train RF with tuned parameters on 70% of available observations----------
+num.threads <- 48
+num.cores <- 48
+min.node.size = 5
+trees <- 300
+
+data_sampling <- "maas_pcr"
+
+print(paste0('Setup: ', data_sampling))
+
+#select subsample predictors
+train_data <- vroom(paste0('../data/', data_sampling, '/train_table_allpredictors.csv'), show_col_type=F)
+testStationInfo <- read.csv(paste0('../data/', data_sampling, '/test_stations.csv'))
+
+outputDir <- paste0('../RF_output/train/', data_sampling, '/')
+dir.create(outputDir, showWarnings = F, recursive = T)
+
+
+outputDirValidation <- paste0('../RF_output/validate/', data_sampling, '/')
+dir.create(outputDirValidation, showWarnings = F, recursive = T)
+
+   
+rf_train <- train_data %>%
+  select(-datetime) %>%
+  #select(columns_set_up_1) %>% 
+  mutate_all(as.numeric)
+
+
+columns_set_up_1 <-  colnames(rf_train)
+
+# Drop rows with NA values
+rf_train <- rf_train[complete.cases(rf_train), ]
+
+
+#print('training: all pcr predictors and meteo')
+process_station(apply_optimalRF, trainRF, rf_train, columns_set_up_1, "allpredictors", trees, 25)
+```
+
+
+
+

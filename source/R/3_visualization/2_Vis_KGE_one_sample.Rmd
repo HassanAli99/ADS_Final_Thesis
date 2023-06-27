@@ -1,0 +1,394 @@
+---
+title: "3_viz_KGE_boxplots"
+author: "Hassan Dahir"
+date: "2023-05-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+####-------------------------------####
+source('../fun_0_loadLibrary.R')
+####-------------------------------####
+library('ggh4x')
+```
+
+
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")  #with grey
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7") #with black
+
+data_sampling <- "maas"
+model <- "MLR"
+
+outputDir <- paste0('../viz/', data_sampling, "/")
+if (!dir.exists(outputDir)) {
+  dir.create(outputDir, showWarnings = FALSE, recursive = TRUE)
+}
+
+#setup <- c("uncalibrated", 'all_dis','all_dis_meteo', "allpredictors")
+
+setup <- c("average", "pcr_dis", "lis_dis", "wg3_dis", 'all_dis','all_dis_meteo', "allpredictors")
+
+output_folder <- paste0("../", model,"_output/") #RF_output
+```
+
+
+```{r}
+#### data preparation ####
+
+#for(subsample in 1:5){
+
+#average discharge
+rf.eval.uncalibrated <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                        '/KGE_allpredictors.csv')) %>%
+  
+  select(.,grdc_no, KGE, KGE_r, KGE_alpha, KGE_beta) %>%
+  mutate(.,setup=factor(setup[1]))
+
+
+#LISFLOOD discharge
+rf.eval.pcr.uncalibrated <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                        '/KGE_allpredictors.csv')) %>%
+  select(.,grdc_no, KGE_pcr, KGE_r_pcr, KGE_alpha_pcr, KGE_beta_pcr) %>% 
+  rename(., KGE=KGE_pcr, KGE_r=KGE_r_pcr, KGE_alpha=KGE_alpha_pcr, KGE_beta=KGE_beta_pcr) %>% 
+  mutate(.,setup=factor(setup[2])) 
+
+#LISFLOOD discharge
+rf.eval.lis.uncalibrated <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                            '/KGE_allpredictors.csv')) %>%
+  select(., grdc_no, KGE_lis, KGE_r_lis, KGE_alpha_lis, KGE_beta_lis) %>% 
+  rename(., KGE = KGE_lis, KGE_r = KGE_r_lis, KGE_alpha = KGE_alpha_lis, KGE_beta = KGE_beta_lis) %>% 
+  mutate(., setup = factor(setup[3])) 
+
+
+#Watergap3 discharge
+rf.eval.wg3.uncalibrated <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                            '/KGE_allpredictors.csv')) %>%
+  select(., grdc_no, KGE_wg3, KGE_r_wg3, KGE_alpha_wg3, KGE_beta_wg3) %>% 
+    rename(., KGE = KGE_wg3, KGE_r = KGE_r_wg3, KGE_alpha = KGE_alpha_wg3, KGE_beta = KGE_beta_wg3) %>% 
+    mutate(., setup = factor(setup[4]))
+
+
+#read all_dis of different models
+rf.eval.all_dis <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                         '/KGE_all_dis.csv')) %>% 
+  select(.,grdc_no, KGE_corrected, KGE_r_corrected, KGE_alpha_corrected, KGE_beta_corrected) %>% 
+  rename(., KGE=KGE_corrected, KGE_r=KGE_r_corrected, KGE_alpha=KGE_alpha_corrected, KGE_beta=KGE_beta_corrected) %>% 
+  mutate(.,setup=factor(setup[5])) 
+
+#read pcr + meteo
+rf.eval.all.dis.meteo <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                         '/KGE_all_dis_meteo.csv')) %>% 
+  select(.,grdc_no, KGE_corrected, KGE_r_corrected, KGE_alpha_corrected, KGE_beta_corrected) %>% 
+  rename(., KGE=KGE_corrected, KGE_r=KGE_r_corrected, KGE_alpha=KGE_alpha_corrected, KGE_beta=KGE_beta_corrected) %>% 
+  mutate(.,setup=factor(setup[6])) 
+
+#read pcr + meteo  + pcr statevariables
+rf.eval.allpredictors <- read.csv(paste0(output_folder, 'validate/',data_sampling,
+                                         '/KGE_allpredictors.csv')) %>% 
+  select(.,grdc_no, KGE_corrected, KGE_r_corrected, KGE_alpha_corrected, KGE_beta_corrected) %>% 
+  rename(., KGE=KGE_corrected, KGE_r=KGE_r_corrected, KGE_alpha=KGE_alpha_corrected, KGE_beta=KGE_beta_corrected) %>% 
+  mutate(.,setup=factor(setup[7])) 
+
+
+#put together in one list
+subsample_KGE <- rbind(rf.eval.uncalibrated, rf.eval.pcr.uncalibrated, rf.eval.lis.uncalibrated, rf.eval.wg3.uncalibrated, rf.eval.all_dis, rf.eval.all.dis.meteo, rf.eval.allpredictors)
+
+
+
+```
+
+
+
+
+
+
+```{r}
+allData <- 
+  subsample_KGE 
+
+  #do.call(rbind, subsample_KGE_list)
+#allDataCum <- allData %>% mutate(subsample='Cumulative')
+#allData <- rbind(allData,allDataCum)
+
+
+plotData <- allData %>% 
+
+  pivot_longer(KGE:KGE_beta, names_to = "KGE_component", 
+                                     values_to = "value") %>% 
+  mutate(setup = factor(setup, levels=  c("average", "pcr_dis", "lis_dis", "wg3_dis", 'all_dis','all_dis_meteo', "allpredictors"))) %>%
+  mutate(KGE_component = fct_relevel(KGE_component, 'KGE','KGE_r','KGE_alpha','KGE_beta'))
+```
+
+
+```{r}
+plotData
+```
+
+
+```{r}
+KGE_data <-
+  plotData %>% 
+  filter(., KGE_component == "KGE") %>% 
+  group_by(setup) %>%
+  
+  summarize(median_value = median(value)) 
+  #pivot_wider(names_from = subsample, values_from = median_value)
+
+KGE_data
+```
+
+
+```{r}
+filename <- paste0("median_KGE_", data_sampling, ".csv")
+
+# Save the data frame as a CSV file
+write.csv(KGE_data, file = paste0(outputDir, filename), row.names = FALSE)
+```
+
+
+
+
+
+
+
+```{r}
+#### plot boxplots ####
+KGE_boxplot <- 
+
+  ggplot(plotData , mapping = aes(setup, value, fill=setup))+
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  
+  facet_grid(vars(KGE_component), scales='free_y', switch='y')+
+  labs(title = paste0("RF KGE ", data_sampling, "\n"))+
+  scale_fill_manual(values = c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F8766D", "#00BFC4", "#7CAE00")) +
+  theme(plot.title = element_text(hjust=0.5, size=16),
+        axis.title=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y= element_text(size=12),
+        legend.position = 'bottom',
+        legend.title=element_blank(),
+        legend.key.size = unit(1, 'cm'),
+        legend.text = element_text(size=14),
+        strip.text = element_text(size=12))+
+  facetted_pos_scales(y = list(
+    KGE_component == "KGE" ~ scale_y_continuous(position='right', limits = c(-4, 1)),
+    KGE_component == "KGE_r" ~ scale_y_continuous(position='right', limits = c(0, 1)),
+    KGE_component == "KGE_alpha" ~ scale_y_continuous(position='right', limits = c(-0.5,5)),
+    KGE_component == "KGE_beta" ~ scale_y_continuous(position='right', limits = c(-0.5,5.5))))
+KGE_boxplot
+```
+
+```{r}
+plotData
+```
+
+
+
+```{r}
+KGE_boxplot <- 
+  plotData %>% 
+  #filter(., subsample=="Cumulative") %>% 
+
+  filter(., KGE_component %in% c("KGE")) %>% #, "KGE_r", "KGE_alpha", "KGE_beta"
+  ggplot(. , mapping = aes(setup, value, fill=setup))+
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  facet_grid(vars(KGE_component),  scales='free_y', switch='y')+
+  labs(title = paste0("Subsampling ", data_sampling, " ", model))+
+  scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F8766D", "#00BFC4", "#7CAE00"))+
+  theme(plot.title = element_text(hjust=0.5, size=16),
+        axis.title=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y= element_text(size=12),
+        legend.position = 'bottom',
+        legend.title=element_blank(),
+        legend.key.size = unit(1, 'cm'),
+        legend.text = element_text(size=14),
+        strip.text = element_text(size=12))+
+  facetted_pos_scales(y = list(
+    KGE_component == "KGE" ~ scale_y_continuous(position='right', limits = c(-1, 1))))
+    #KGE_component == "KGE_r" ~ scale_y_continuous(position='right', limits = c(0, 1)),
+    #KGE_component == "KGE_alpha" ~ scale_y_continuous(position='right', limits = c(-0.5,5)),
+    #KGE_component == "KGE_beta" ~ scale_y_continuous(position='right', limits = c(-0.5,5.5))))
+KGE_boxplot
+```
+
+
+
+
+```{r}
+#Save fig
+
+ggsave(paste0(outputDir,'KGE_boxplots_', model, data_sampling,  '.png'), KGE_boxplot, height=10, width=10, units='in', dpi=600)
+```
+
+
+
+```{r}
+KGE_data <-
+  plotData %>% 
+  filter(., KGE_component == "KGE") %>% 
+  group_by(setup) %>%
+  #filter(., subsample=="Cumulative") %>% 
+
+  summarize(median_value = median(value))
+  #pivot_wider(names_from = subsample, values_from = median_value)
+
+KGE_data
+```
+
+
+```{r}
+filename <- paste0('median_KGE_', model, '.csv')
+
+# Save the data frame as a CSV file            
+write.csv(KGE_data, file = paste0(outputDir, filename), row.names = FALSE)
+```
+
+
+
+
+
+
+```{r}
+#### some stats (paper section 3.3.) ####
+
+setup <- c("uncalibrated", 'all_dis','all_dis_meteo', "allpredictors")
+
+
+uncalibratedCum <- allDataCum %>% filter(setup=='uncalibrated')
+Discharge_onlyCum <- allDataCum %>% filter(setup=='pcr_predicted')
+
+print("-------------KGE-------------")
+mean(summary(uncalibratedCum$KGE))
+summary(Discharge_onlyCum$KGE)
+
+print("-------------KGE_r-------------")
+summary(uncalibratedCum$KGE_r)
+summary(Discharge_onlyCum$KGE_r)
+
+
+print("-------------KGE_alpha-------------")
+summary(uncalibratedCum$KGE_alpha)
+summary(Discharge_onlyCum$KGE_alpha)
+
+print("-------------KGE_beta-------------")
+summary(uncalibratedCum$KGE_beta)
+summary(Discharge_onlyCum$KGE_beta)
+
+```
+
+
+```{r}
+calculate_and_print_summaries <- function(allDataCum, setup) {
+  setupCum1 <- allDataCum %>% filter(setup == setup)
+  
+  print("-------------KGE-------------")
+  print(mean(summary(setupCum1$KGE)))
+  print(summary(setupCum1$KGE))
+  
+  print("-------------KGE_r-------------")
+  print(summary(setupCum1$KGE_r))
+  
+  print("-------------KGE_alpha-------------")
+  print(summary(setupCum1$KGE_alpha))
+  
+  print("-------------KGE_beta-------------")
+  print(summary(setupCum1$KGE_beta))
+  
+  return(setupCum1)
+}
+
+setup <- c("uncalibrated", 'all_dis','all_dis_meteo', "allpredictors")
+uncalibratedCum <- calculate_and_print_summaries(allDataCum, setup[1])
+```
+
+
+```{r}
+setup <- c("uncalibrated", 'all_dis','all_dis_meteo', "allpredictors")
+AllpredictursCum <- calculate_and_print_summaries(allDataCum, setup[4])
+```
+
+
+```{r}
+AllpredictursCum
+```
+
+
+
+
+
+
+
+```{r}
+# Calculate mean values
+uncalibrated_mean <- mean(uncalibratedCum$KGE)
+discharge_only_mean <- mean(Discharge_onlyCum$KGE)
+uncalibrated_r_mean <- mean(uncalibratedCum$KGE_r)
+discharge_only_r_mean <- mean(Discharge_onlyCum$KGE_r)
+uncalibrated_alpha_mean <- mean(uncalibratedCum$KGE_alpha)
+discharge_only_alpha_mean <- mean(Discharge_onlyCum$KGE_alpha)
+uncalibrated_beta_mean <- mean(uncalibratedCum$KGE_beta)
+discharge_only_beta_mean <- mean(Discharge_onlyCum$KGE_beta)
+
+# Create a dataframe
+data_stats <- data.frame(
+  Metric = c("KGE", "KGE_r", "KGE_alpha", "KGE_beta"),
+  Uncalibrated = c(uncalibrated_mean, uncalibrated_r_mean, uncalibrated_alpha_mean, uncalibrated_beta_mean),
+  Discharge_only = c(discharge_only_mean, discharge_only_r_mean, discharge_only_alpha_mean, discharge_only_beta_mean)
+)
+
+# Print the dataframe
+data_stats
+
+```
+
+
+
+
+
+
+
+
+
+  #read pcr_discharge_only
+  rf.eval.pcr_discharge_only <- read.csv(paste0('../RF/3_validate/subsample_', subsample,
+                                           '/KGE_pcr_dis.csv')) %>% 
+    select(.,grdc_no, KGE_corrected, KGE_r_corrected, KGE_alpha_corrected, KGE_beta_corrected) %>% 
+    rename(., KGE=KGE_corrected, KGE_r=KGE_r_corrected, KGE_alpha=KGE_alpha_corrected, KGE_beta=KGE_beta_corrected) %>%
+    mutate(.,setup=factor(setup[2])) %>% 
+    mutate(.,subsample=factor(subsample)) 
+  
+  
+  
+   #read pcr + meteo
+  rf.eval.pcr_meteo <- read.csv(paste0('../RF/3_validate/subsample_', subsample,
+                                           '/KGE_pcr_dis_meteo.csv')) %>% 
+    select(.,grdc_no, KGE_corrected, KGE_r_corrected, KGE_alpha_corrected, KGE_beta_corrected) %>% 
+    rename(., KGE=KGE_corrected, KGE_r=KGE_r_corrected, KGE_alpha=KGE_alpha_corrected, KGE_beta=KGE_beta_corrected) %>% 
+    mutate(.,setup=factor(setup[3])) %>% 
+    mutate(.,subsample=factor(subsample)) 
+  
+  #read pcr + meteo  + pcr statevariables
+  rf.eval.pcr_allpredictors <- read.csv(paste0('../RF/3_validate/subsample_', subsample,
+                                           '/KGE_pcr_allpredictors.csv')) %>% 
+    select(.,grdc_no, KGE_corrected, KGE_r_corrected, KGE_alpha_corrected, KGE_beta_corrected) %>% 
+    rename(., KGE=KGE_corrected, KGE_r=KGE_r_corrected, KGE_alpha=KGE_alpha_corrected, KGE_beta=KGE_beta_corrected) %>% 
+    mutate(.,setup=factor(setup[4])) %>% 
+    mutate(.,subsample=factor(subsample))
+

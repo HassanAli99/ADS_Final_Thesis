@@ -1,0 +1,219 @@
+---
+title: "Hydrograph_all"
+author: "Hassan Dahir"
+date: "2023-05-29"
+output: html_document
+---
+
+```{r}
+####-------------------------------####
+source('../fun_0_loadLibrary.R')
+####-------------------------------####
+
+####-------------------------------####
+```
+
+
+
+```{r}
+plot_hydrograph <- function(station_no, convRatio, model, variable_setup) {
+  
+  all_q1 <- read.csv(paste0(dir1, station_no,'.csv'), header = T) %>%
+    mutate(datetime=as.Date(datetime)) %>% 
+    relocate(average_dis, .before = dis_corrected) %>% 
+    select(datetime, dis_corrected, res, res_corrected) %>% 
+    filter(datetime >= as.Date("1996-01-01") & datetime <= as.Date("2006-12-31")) %>%  
+    rename(dis_mmc = dis_corrected, res_average = res, res_mmc = res_corrected) %>% 
+    select(., everything())
+  
+
+  all_q2 <- read.csv(paste0(dir2, station_no,'.csv'), header = T) %>%
+    mutate(datetime=as.Date(datetime)) %>% 
+    select(datetime, obs, pcr, dis_corrected, res, res_corrected) %>% 
+    filter(datetime >= as.Date("1996-01-01") & datetime <= as.Date("2006-12-31")) %>%  
+
+    rename(dis_pcr_calibrated = dis_corrected, res_pcr = res, res_pcr_calibrated = res_corrected) %>% 
+    select(., everything())
+  
+
+  all_q <- merge(all_q1, all_q2, by = "datetime", all = F)
+  
+  
+  plotData <- all_q %>%
+    select(datetime, obs, dis_pcr_calibrated, dis_mmc) %>%
+    gather(., key = "condition", value = "value", obs:dis_mmc)
+  
+  
+  ggplot(plotData, aes(x = datetime, y = value, color = condition)) +
+    
+    geom_line(size = 0.7, alpha = 0.6) +
+    geom_point(aes(shape=condition), size=1.5, alpha = 0.6, show.legend = F) +
+
+    xlab('date\n') +
+    ylab('flow depth (m/d)\n') +
+    scale_y_continuous(sec.axis = sec_axis(~.*convRatio, name=expression('discharge (' *m^{3}/s* ')'))) +
+
+    scale_color_manual(labels = c("Observed discharge", "discharge PCR_allpredictors",  "discharge MMC_allpredictors"),
+                   values = c("#000000", "#0072B2", "#E69F00")) +
+
+                       #values = c("#56B4E9", "#000000", "#E69F00")) +
+    theme_minimal() +
+    theme(
+      legend.title = element_blank(),
+      legend.text = element_text(size = 16),
+      axis.title.x = element_text(face = "bold", size = 16),
+      axis.title.y = element_text(size = 16),
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      panel.background = element_rect(fill = "#F2F2F2")
+
+    )
+}
+```
+
+
+
+```{r}
+combiPlot_hg <- function(i) {
+  station_no <- stationInfo$grdc_no[i]
+  upstreamArea <- stationInfo$area[i]
+  convRatio <- upstreamArea / 0.0864
+
+  print(paste0("Plotting data at station: ", station_no))
+    
+  hg <- plot_hydrograph(station_no, convRatio, model, variable_setup)
+
+  KGE_uncalib <- round(combined_table$KGE_pcr_uncalibrated[combined_table$grdc_no==station_no],2)
+  KGE_corrected1 <- round(combined_table$KGE_mmc_allpredictors[combined_table$grdc_no==station_no],2)
+  KGE_corrected2 <- round(combined_table$KGE_pcr_allpredictors [combined_table$grdc_no == station_no], 2)
+  miss_data <- combined_table$miss[combined_table$grdc_no==station_no]
+
+  
+  combined <- hg +
+    plot_annotation(
+      title = paste0(
+        station_no, ' : ', str_to_title(stationInfo$station[i]), ' (',
+        str_to_title(stationInfo$river[i]), ', ', stationInfo$country[i], ')'
+      ),
+      
+      subtitle = paste0('lat: ', stationInfo$lat[i], ', lon: ', stationInfo$lon[i],
+                        '\nUpstream area: ', upstreamArea, ' km2'),
+      
+      
+      caption = paste0('KGE: ', KGE_uncalib, ' (PCR_uncalibrated)', KGE_corrected2, ' (PCR_allpredictors), ', KGE_corrected1, ' (allpredictors (MMC))\n',
+                       'Missing data (1979-2012): ', miss_data, '%')) +
+    
+    
+    
+    plot_layout(guides='collect') &
+    theme(plot.title = element_text(hjust= 0.5, size = 22, face='bold'),
+          plot.subtitle = element_text(hjust= 0.5, size = 18),
+          plot.caption = element_text(size = 16, face='bold'),
+          text = element_text('mono'),
+          legend.position = 'bottom')
+  
+  ggsave(paste0(outputDirCombo, 'comboPlot_', station_no, '.png'), combined, height = 8, width = 25, units = 'in', dpi = 300)
+
+}
+
+```
+
+
+
+
+```{r}
+data_setup1 <- "rhine_only"
+data_setup2 <- "pcr_rhine"
+
+
+outputDir <- paste0('../viz/', data_setup2, "/")
+if (!dir.exists(outputDir)) {
+  dir.create(outputDir, showWarnings = FALSE, recursive = TRUE)
+}
+
+variable_setup <- c('allpredictors')
+
+model = "RF"
+folder_validate <- paste0("../", model,"_output/")
+```
+
+
+
+
+
+
+```{r}
+
+
+#### all subsamples ####
+for(subsample in 1:5){
+  
+    print(paste0('subsample: ', subsample))
+    
+    dir1 <- paste0(folder_validate, 'validate/', data_setup1, '/subsample_',subsample, "/", variable_setup, "/", "rf_result_")
+    dir2 <- paste0(folder_validate, 'validate/', data_setup2, '/subsample_',subsample, "/", variable_setup, "/", "rf_result_")
+
+    
+    #dir <- paste0('../RF/3_validate/subsample_', subsample, '/tables_allpredictors/')
+
+    stationInfo1 <- read.csv(paste0('../data/', data_setup1, '/subsample_',subsample, '/test_stations.csv'))
+    stationInfo2 <- read.csv(paste0('../data/', data_setup2, '/subsample_',subsample, '/test_stations.csv'))
+    
+    common_grdc_no <- intersect(stationInfo1$grdc_no, stationInfo2$grdc_no)  # Get common "grdc_no" values
+
+    stationInfo <- rbind(stationInfo1[stationInfo1$grdc_no %in% common_grdc_no, ],
+                         stationInfo2[stationInfo2$grdc_no %in% common_grdc_no, ])
+
+    KGE_table1 <- read.csv(paste0(folder_validate, 'validate/', data_setup1, '/subsample_', subsample,'/KGE_', variable_setup, '.csv')) %>%
+      inner_join(., read.csv('../data/stationLatLon.csv') %>% 
+                   select(c('grdc_no', 'miss')), by = 'grdc_no') %>%
+      
+      
+      select(grdc_no, miss, KGE, KGE_wg3, KGE_pcr, KGE_lis, KGE_corrected) %>%
+      rename(KGE_average = KGE, KGE_mmc_allpredictors = KGE_corrected)
+    
+    
+    
+    KGE_table2 <- read.csv(paste0(folder_validate, 'validate/', data_setup2, '/subsample_', subsample,'/KGE_', variable_setup, '.csv')) %>%
+      inner_join(., read.csv('../data/stationLatLon.csv') %>% 
+                   select(c('grdc_no', 'miss')), by = 'grdc_no') %>%
+      select(grdc_no, KGE, KGE_corrected) %>% 
+      rename(KGE_pcr_uncalibrated = KGE, KGE_pcr_allpredictors = KGE_corrected)
+
+
+    combined_table <- merge(KGE_table1, KGE_table2, by = "grdc_no", all = F)
+      
+      
+    outputDirCombo <- paste0(outputDir, 'hydroPlots_', model, "/", variable_setup, '/subsample_', subsample, '/')
+    dir.create(outputDirCombo, showWarnings = F, recursive = T)
+    print('plotting...')
+
+
+    mclapply(1:nrow(stationInfo), combiPlot_hg, mc.cores=1)
+
+
+}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

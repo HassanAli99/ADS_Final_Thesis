@@ -1,0 +1,159 @@
+---
+title: "Train MLR model"
+author: "Hassan Dahir"
+date: "2023-05-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+####-------------------------------####
+source('../fun_0_loadLibrary.R')
+####-------------------------------####
+```
+
+
+```{r}
+source('fun_apply_MLR.R')
+source('fun_trainMLR.R')
+```
+
+
+
+
+```{r}
+library(vroom)  
+library(purrr)
+library(car)
+```
+
+
+
+```{r}
+train_test_setup <- function(apply_MLR, trainMLR, train_data, columns_set_up, key) {
+  
+  mlr_input <- train_data %>% 
+    dplyr::select(all_of(columns_set_up)) %>% 
+    dplyr::mutate_all(as.numeric)
+  
+  mlr_model <- trainMLR(mlr_input)
+  
+  # Save coefficients to a file
+  coef_file <- paste0(outputDirValidation, 'coefficients_', key, '.csv')
+  coef_data <- data.frame(variable = names(mlr_model$coefficients), coefficient = as.numeric(mlr_model$coefficients))
+  write.csv(coef_data, coef_file, row.names = FALSE)
+  
+  
+  
+  # Calculate VIF values
+  vif_values <- vif(mlr_model)
+  variable_names <- names(vif_values)
+  
+  # Save VIF values to a file
+  vif_file <- paste0(outputDirValidation, 'vif_', key, '.csv')
+  vif_data <- data.frame(variable = variable_names, vif = as.vector(vif_values))
+  write.csv(vif_data, vif_file, row.names = FALSE)
+  
+  
+  KGE_list <- mclapply(1:nrow(testStationInfo), key=key, columns_set_up=columns_set_up, model=mlr_model, apply_MLR, mc.cores=1)  
+  
+  rf.eval <- do.call(rbind,KGE_list)
+  write.csv(rf.eval, paste0(outputDirValidation, 'KGE_' , key, '.csv'), row.names = F)
+}
+```
+
+
+```{r}
+data_sampling <- "maas"
+model = "MLR"
+print(paste0('Setup: ', data_sampling))
+```
+
+
+
+```{r}
+#-------train MLR with tuned parameters on Rhine simulated dataset and test on Elbe or Maas simulated dataset ---------
+
+#select subsample predictors
+train_data <- vroom(paste0('../data/', data_sampling, '/train_table_allpredictors.csv'), show_col_type=F)
+testStationInfo <- read.csv(paste0('../data/', data_sampling, '/test_stations.csv'))
+
+outputDir <- paste0('../MLR_output/train/', data_sampling, '/')
+dir.create(outputDir, showWarnings = F, recursive = T)
+
+
+outputDirValidation <- paste0('../MLR_output/validate/', data_sampling, '/')
+dir.create(outputDirValidation, showWarnings = F, recursive = T)
+
+
+### PCR Discharge only ###
+
+# Rename the column "Obs_dis" to "obs"
+colnames(train_data)[colnames(train_data) == "pcr_dis"] <- "pcr"
+colnames(train_data)[colnames(train_data) == "lis_dis"] <- "lis"
+colnames(train_data)[colnames(train_data) == "wg3_dis"] <- "wg3"
+
+print(colnames(train_data))
+### Discharge only ### 
+
+
+#print('training: pcr discharge only')
+columns_set_up_4.1 <- c("pcr", "lis", "wg3", "obs")
+columns_set_up_4.2 <-  c("meteo_rain", "meteo_tair", "pcr", "lis", "wg3", "obs")
+columns_set_up_4.3 <-  c("meteo_rain", "meteo_tair", "wg3", "wg3_RootMoist", "wg3_SurfStor", "wg3_SWE",
+                "lis", "lis_SurfMoist", "lis_SWE", "pcr", "pcr_SurfMoist", "pcr_SurfStor",
+                "pcr_SWE", "obs")
+
+
+
+#### Input data when all models are combined   #### 
+
+mlr_input4.1 <- 
+  train_data %>% 
+  select(all_of(columns_set_up_4.1))  %>% 
+  mutate_all(as.numeric) 
+
+mlr_input4.2 <- 
+  train_data %>% 
+  select(all_of(columns_set_up_4.2))  %>% 
+  mutate_all(as.numeric) 
+
+
+mlr_input4.3 <- 
+  train_data %>% 
+  select(all_of(columns_set_up_4.3))  %>% 
+  mutate_all(as.numeric) 
+```
+
+
+
+
+
+
+```{r}
+train_test_setup(apply_MLR, trainMLR, mlr_input4.1, columns_set_up_4.1, "all_dis")
+
+train_test_setup(apply_MLR, trainMLR, mlr_input4.2, columns_set_up_4.2, "all_dis_meteo")
+
+train_test_setup(apply_MLR, trainMLR, mlr_input4.3, columns_set_up_4.3, "allpredictors")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
