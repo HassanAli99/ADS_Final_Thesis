@@ -17,7 +17,6 @@ The code in this repository implements Random Forest and Multiple Linear Regress
 
 The r code is structured as follows:
 .
-
 ├── 1_randomForest
 │   └── R_code.R
 ├── 2_multilinearRegression
