@@ -14,6 +14,20 @@ The training and validation datasets used in the study are available [here](http
 ## Code
 
 The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results.
+The folder with the python code is structured as follows:
+
+``` bash
+
+└── py
+    ├── 00_combine_resample_meteo_data.ipynb
+    ├── 01_extracting_obs.ipynb
+    ├── 02_Upstream_average.ipynb
+    ├── 03_Extract_station_data.ipynb
+    ├── 04_Combine_files.ipynb
+    ├── 05_Data_cleaning_Normalization.ipynb
+    └── 06_Sampling.ipynb
+```
+
 
 The R code is structured as follows:
 ``` bash
@@ -44,19 +58,7 @@ The R code is structured as follows:
         └── fun_3_4_hydrograph_fdc_residuals_all.R
 ```
 
-The folder with the python code is structured as follows:
 
-``` bash
-
-└── py
-    ├── 00_combine_resample_meteo_data.ipynb
-    ├── 01_extracting_obs.ipynb
-    ├── 02_Upstream_average.ipynb
-    ├── 03_Extract_station_data.ipynb
-    ├── 04_Combine_files.ipynb
-    ├── 05_Data_cleaning_Normalization.ipynb
-    └── 06_Sampling.ipynb
-```
 
 ## Results
 
