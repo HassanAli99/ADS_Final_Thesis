@@ -1,4 +1,7 @@
 # Hybrid Streamflow Modelling using Machine Learning and Multi-Model Combination
+**Master thesis Applied Data Science Utrecht University** 
+
+June 2023
 
 This repository contains the code and data for the research study titled "Hybrid Streamflow Modelling using Machine Learning and Multi-Model Combination." 
 
