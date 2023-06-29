@@ -66,9 +66,3 @@ The R code is structured as follows:
 The output and results of the Random Forest and Multiple Linear Regression analysis can be found [here](https://doi.org/10.5281/zenodo.8097495). These results showcase the performance and accuracy of the implemented models.
 
 Please refer to the provided DOI links to access the respective data and results.
-
-For any inquiries or issues, please contact the repository owner.
-
-Note: Make sure to properly cite the relevant data sources and this repository if you use the code or data for your own research purposes.
-
-Enjoy exploring the study and experimenting with the code!
