@@ -60,7 +60,7 @@ num.cores <- 48
 min.node.size = 5
 trees <- 300
 
-data_sampling <- "maas_pcr"
+data_sampling <- "maas_catch"
 
 print(paste0('Setup: ', data_sampling))
 

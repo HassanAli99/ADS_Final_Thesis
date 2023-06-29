@@ -123,7 +123,7 @@ combiPlot_hg <- function(i) {
 
 ```{r}
 data_setup1 <- "rhine_only"
-data_setup2 <- "pcr_rhine"
+data_setup2 <- "rhine_pcr"
 
 
 outputDir <- paste0('../viz/', data_setup2, "/")
@@ -133,8 +133,7 @@ if (!dir.exists(outputDir)) {
 
 variable_setup <- c('allpredictors')
 
-model = "RF"
-folder_validate <- paste0("../", model,"_output/")
+folder_validate <- paste0("../output/RF_output/")
 ```
 
 

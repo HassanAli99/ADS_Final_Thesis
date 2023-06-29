@@ -33,7 +33,7 @@ columns_set_up_1 <-  c("meteo_rain", "meteo_tair", "wg3", "wg3_RootMoist", "wg3_
 columns_set_up_2<-  c("meteo_rain", "meteo_tair", "pcr", "lis", "wg3", "obs")
 
 
-data_sampling <- "pcr_rhine"
+data_sampling <- "all_stations"
 
 for(subsample in 1:5){
 
@@ -48,7 +48,7 @@ for(subsample in 1:5){
   colnames(train_data)[colnames(train_data) == "wg3_dis"] <- "wg3"
   
   
-  outputDir <- paste0('../RF_output/tune/', data_sampling, '/subsample_',subsample,'/')
+  outputDir <- paste0('../output/RF_output/tune/', data_sampling, '/subsample_',subsample,'/')
   dir.create(outputDir, showWarnings = F, recursive = T)
   
   #tuning

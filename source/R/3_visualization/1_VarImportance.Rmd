@@ -44,10 +44,6 @@ predNames <- sub("(dis)\\b", "FlowDepth", predNames)
 ```
 
 
-```{r}
-predNames
-```
-
 
 
 ```{r}
@@ -146,60 +142,4 @@ gridPlot <- grid.arrange(grobs = viPlotList, nrow = 3, ncol = 1)
 
 ggsave(paste0(outputDir, 'varImportance_all.png'), gridPlot, height=30, width=25, units='in', dpi=600)
 
-```
-
-
-```{r}
-else {
-    viPlot <- ggplot(plotData) +
-      geom_col(
-        aes(reorder(names, c(value[key == 'importance_avg'])), sqrt(value)),
-        position = 'dodge', fill = plotData$labColor
-      ) +
-      geom_errorbar(
-        aes(
-          reorder(names, c(value[key == 'importance_avg'])),
-          ymin = sqrt(value) - sqrt(importance_sd),
-          ymax = sqrt(value) + sqrt(importance_sd),
-          width = 0.8, size = 0.1, colour = "black"
-        ),
-        show.legend = FALSE
-      ) +
-      ylim(0, 0.65) +
-      coord_flip() +
-      theme_light() +
-      labs(x = NULL, y = NULL, title = paste0('\n', setup[i], '\n')) +
-      theme(
-        axis.text.y = element_text(size = 35, color = "black"),
-        axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(),
-        title = element_text(size = 40)
-      )
-  }
-  
-  viPlotList[[i]] <- viPlot
-```
-
-
-
-
-
-
-
-
-```{r}
-trainingPlot <- viPlotList[[1]] / viPlotList[[2]] / viPlotList[[3]]  
-trainingPlotSize <- trainingPlot #+ plot_layout(heights=c(5,3,3))
-trainingPlotSize
-
-ggsave(paste0(outputDir, 'varImportance.png'), trainingPlotSize, height=8, width=10, units='in', dpi=600)
-
-
-```
-
-
-```{r}
-# add predictor type (static or time-variant) to color plot text
-
-plotData
 ```

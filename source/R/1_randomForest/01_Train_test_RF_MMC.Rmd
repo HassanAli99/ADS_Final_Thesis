@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 source('../fun_0_loadLibrary.R')
 ####-------------------------------####
 source('fun_2_2_trainRF.R')
-source('fun_2_3_apply_optimalRF_pcr.R')
+source('fun_2_3_apply_optimalRF_avg.R')
 ```
 
 
@@ -24,6 +24,10 @@ source('fun_2_3_apply_optimalRF_pcr.R')
 ```{r}
 library(vroom)  
 library(purrr)
+library(partykit)
+library(randomForest)
+library(rpart.plot)
+library(ranger)
 
 
 ```
@@ -49,8 +53,11 @@ process_station <- function(apply_optimalRF, trainRF, train_data, columns_set_up
   #KGE_list <- mclapply(1:nrow(testStationInfo), key=key, columns_set_up, apply_optimalRF, mc.cores=1)
   rf.eval <- do.call(rbind,KGE_list)
   write.csv(rf.eval, paste0(outputDirValidation, 'KGE_' , key, '.csv'), row.names = F)
-  #print('allpredictors: finished validation...')
+  
+  # Save RF tree as a visual figure
+
 }
+
 ```
 
 
@@ -63,11 +70,8 @@ min.node.size = 5
 #Keep one hyper parameters
 trees <- 300
 
-
-data_sampling <- "mmc_catchAtt" 
-
-#tuned_mtry <- read.csv('../RF/2_train/tuned_mtry.csv', header=T) %>% 
-    #select(., -setup)
+# Choose setup
+data_sampling <- "rhine_only" 
 
 for(subsample in 1:5){
     
@@ -86,28 +90,54 @@ for(subsample in 1:5){
     outputDirValidation <- paste0('../RF_output/validate/', data_sampling, '/subsample_',subsample,'/')
     dir.create(outputDirValidation, showWarnings = F, recursive = T)
   
+
+  # Rename the column "Obs_dis" to "obs"
+  colnames(train_data)[colnames(train_data) == "pcr_dis"] <- "pcr"
+  colnames(train_data)[colnames(train_data) == "lis_dis"] <- "lis"
+  colnames(train_data)[colnames(train_data) == "wg3_dis"] <- "wg3"
+
+  print(colnames(train_data))
+  ### Discharge only ### 
+
+  
+  #print('training: pcr discharge only')
+  columns_set_up_4.1 <- c("pcr", "lis", "wg3", "obs")
+  columns_set_up_4.2 <-  c("meteo_rain", "meteo_tair", "pcr", "lis", "wg3", "obs")
+  columns_set_up_4.3 <-  c("meteo_rain", "meteo_tair", "wg3", "wg3_RootMoist", "wg3_SurfStor", "wg3_SWE",
+                  "lis", "lis_SurfMoist", "lis_SWE", "pcr", "pcr_SurfMoist", "pcr_SurfStor",
+                  "pcr_SWE", "obs")
+  
+  
+  #### Input data when all models are combined   #### 
+  
+  rf_input4.1 <- 
+    train_data %>% 
+    select(all_of(columns_set_up_4.1))  %>% 
+    mutate_all(as.numeric)  %>% 
+    mutate(across(c("pcr", "lis", "wg3"), as.numeric))
+  
+  rf_input4.2 <- 
+    train_data %>% 
+    select(all_of(columns_set_up_4.2))  %>% 
+    mutate_all(as.numeric)  %>% 
+    mutate(across(c("pcr", "lis", "wg3"), as.numeric)) 
+  
+  rf_input4.3 <- 
+    train_data %>% 
+    select(all_of(columns_set_up_4.3))  %>% 
+    mutate_all(as.numeric) %>% 
+    mutate(across(c("pcr", "lis", "wg3"), as.numeric))
   
 
-    
-    rf_train <- train_data %>%
-      select(-datetime) %>%
-      #select(-Unnamed.0) %>%
-
-      mutate_all(as.numeric)
-
+  #process_station(apply_optimalRF, trainRF, rf_input4.1, columns_set_up_4.1, "all_dis", trees, 1)
   
-    # Print count of NA values
-    #na_counts <- colSums(is.na(rf_train))
-
-    
-    # Drop rows with NA values
-    #rf_train <- rf_train[complete.cases(rf_train), ]
-        
-    columns_set_up_1 <-  colnames(rf_train)
-
-    #print('training: all pcr predictors and meteo')
-    process_station(apply_optimalRF, trainRF, rf_train, columns_set_up_1, "allpredictors", trees, 25)
-    
+  #print('training: pcr discharge and meteo')
+  
+  #process_station(apply_optimalRF, trainRF, rf_input4.2, columns_set_up_4.2, "all_dis_meteo", trees, 3)
+  
+  #print('training: all pcr predictors and meteo')
+  process_station(apply_optimalRF, trainRF, rf_input4.3, columns_set_up_4.3, "allpredictors", trees, 4)
+  
 
 }
 ```

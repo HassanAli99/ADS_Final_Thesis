@@ -29,8 +29,6 @@ library(ggplot2)
 
 
 ```{r}
-# cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")  #with grey
-# cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7") #with black
 data_sampling <- "rhine_only"
 model <- "MLR"
 
@@ -50,7 +48,7 @@ output_folder <- paste0("../", model,"_output/") #RF_output
 
 ```{r}
 #### data preparation ####
-  subsample_KGE_list <- list ()
+subsample_KGE_list <- list ()
 
 
 
@@ -143,11 +141,6 @@ plotData <- allData %>%
 ```
 
 
-```{r}
-allData
-```
-
-
 
 ```{r}
 KGE_data <-
@@ -159,7 +152,7 @@ KGE_data <-
   summarize(median_value = median(value)) %>% 
   pivot_wider(names_from = subsample, values_from = median_value)
 
-KGE_data
+
 ```
 
 
@@ -211,29 +204,6 @@ KGE_boxplot
 ggsave(paste0(outputDir,'KGE_boxplot_', data_sampling, model, '.png'), KGE_boxplot, height=8, width=8, units='in', dpi=600)
 
 ```
-
-
-
-
-```{r}
-
-
-# Create a scatter plot of residuals against predicted values
-ggplot(mlr_result, aes(x = dis_corrected, y = res_corrected)) +
-  geom_point() +
-  xlab("Predicted values") +
-  ylab("Residuals") +
-  ggtitle("Residuals vs. Predicted Values") +
-  theme_minimal()
-
-# Save the plot to a file
-plot_file <- paste0(outputDirTables, 'residuals_plot_', station_no, '.png')
-ggsave(plot_file
-
-```
-
-
-
 
 
 

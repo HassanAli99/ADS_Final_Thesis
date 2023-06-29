@@ -111,19 +111,6 @@ for(subsample in 1:5){
 
 
 
-plot_hydrograph <- function(station_no, convRatio, model, variable_setup){
-  
-  all_q <- read.csv(paste0(dir, station_no,'.csv'), header = T) %>%
-    mutate(datetime=as.Date(datetime)) %>% 
-    relocate(average_dis, .before = dis_corrected) %>% 
-  
-    select(., everything())
-  
-  
-  
-}
-
-
 
 
 
