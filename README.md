@@ -33,7 +33,14 @@ The R code is structured as follows:
 │   ├── fun_apply_MLR.R
 │   └── fun_trainMLR.R
 └── 3_visualization
-    └── R_code.R"
+    ├── 0_Vis_HyperTuning.Rmd
+    ├── 1_VarImportance.Rmd
+    ├── 2_Vis_KGE.Rmd
+    ├── 3_Vis_KGE_one_sample.Rmd
+    ├── 4_Hydrograph_all.Rmd
+    ├── 5_Hydrograph_benchmark.Rmd
+    ├── fun_3_4_hydrograph_benchmark.R
+    └── fun_3_4_hydrograph_fdc_residuals_all.R
 ```
 ## Results
 
