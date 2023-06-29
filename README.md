@@ -15,7 +15,7 @@ The training and validation datasets used in the study are available [here](http
 
 The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results.
 
-The r code is structured as follows:
+The R code is structured as follows:
 ``` bash
 ├── 1_randomForest
 │   ├── 00_RF_tune.Rmd
