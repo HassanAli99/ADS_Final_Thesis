@@ -12,7 +12,7 @@ The raw and preprocessed input data for the study can be accessed [here](https:/
 The training and validation datasets used in the study are available [here](https://doi.org/10.5281/zenodo.8092323). 
 ## Code
 
-The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results. Python was used for data preprocessing in this research study, while R was used for data analysis and modeling. 
+The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results. In this study, Python was used for data preprocessing and visualization of results, while R was used for data analysis and machine learning modelling. 
 
 The folder with the Python code is structured as follows:
 
