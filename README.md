@@ -1,5 +1,5 @@
 # Hybrid Streamflow Modelling using Machine Learning and Multi-Model Combination
-**Master thesis Applied Data Science Utrecht University** 
+**Master thesis Applied Data Science, Utrecht University** 
 
 June 2023
 
@@ -13,7 +13,7 @@ The training and validation datasets used in the study are available [here](http
 
 ## Code
 
-The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results. Python was used for data preprocessing in this research study, while R was used for data analysis and modeling.
+The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results. Python was used for data preprocessing in this research study, while R was used for data analysis and modeling. 
 
 The folder with the Python code is structured as follows:
 
@@ -30,7 +30,7 @@ The folder with the Python code is structured as follows:
 ```
 
 
-The R code is structured as follows:
+The folder with the R code is structured as follows:
 ``` bash
 └── R
     ├── 1_randomForest
