@@ -26,6 +26,7 @@ The folder with the Python code is structured as follows:
     ├── 04_Combine_files.ipynb
     ├── 05_Data_cleaning_Normalization.ipynb
     ├── 06_Sampling.ipynb
+    ├── 07_Combine_CatchmentAttributes.ipynb
     ├── V0_discharge_plots.ipynb
     ├── V1_cor_plot.ipynb
     ├── V2_coefficients_plot.ipynb
