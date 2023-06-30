@@ -9,8 +9,7 @@ This repository contains the code and data for the research study titled "Hybrid
 
 The raw and preprocessed input data for the study can be accessed [here](https://doi.org/10.5281/zenodo.8097461). This dataset includes the necessary input variables for the streamflow modelling process.
 
-The training and validation datasets used in the study are available [here](https://doi.org/10.5281/zenodo.8092323). These datasets were used for training and evaluating the models.
-
+The training and validation datasets used in the study are available [here](https://doi.org/10.5281/zenodo.8092323). 
 ## Code
 
 The code in this repository implements Random Forest and Multiple Linear Regression analysis for streamflow modelling. It takes the provided input data and generates the corresponding results. Python was used for data preprocessing in this research study, while R was used for data analysis and modeling. 
